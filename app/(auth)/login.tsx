@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  Pressable,
 } from "react-native";
 
 export default function LoginScreen() {
@@ -66,17 +67,18 @@ export default function LoginScreen() {
           onChangeText={setPassword}
         />
 
-        <TouchableOpacity onPress={handleLogin} style={styles.button}>
-          <Text style={styles.buttonText}>Log In</Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading}>
+          <Text style={styles.buttonText}>{loading?'Loading...':'Log In'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.register}>
           <Text style={styles.registerText}>
             Don’t have an account?{" "}
-            <Link style={styles.registerLink} href="/register">
-              Sign up
-            </Link>
+             <Pressable onPress={()=>router.push("/(auth)/register")}>
+            <Text style={styles.registerLink}>Sign up</Text>
+          </Pressable>
           </Text>
+         
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>

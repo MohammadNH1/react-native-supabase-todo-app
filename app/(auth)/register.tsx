@@ -8,34 +8,34 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Pressable,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-const [loading,setLoading] = useState(false)
-const router = useRouter()
-  const handleRegister = async() => {
-    if ( !email || !password) return alert("Please fill in all fields.");
-   
-        setLoading(true)
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.signUp({
-          email: email,
-          password: password,
-        })
-    
-        if (error) Alert.alert(error.message)
-        if(session){
-      setTimeout(()=>{
-        router.replace("/(tabs)/profile")
-      },300)
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const handleRegister = async () => {
+    if (!email || !password) return alert("Please fill in all fields.");
+
+    setLoading(true);
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+
+    if (error) Alert.alert(error.message);
+    if (session) {
+      setTimeout(() => {
+        router.replace("/(tabs)/profile");
+      }, 300);
     }
-        setLoading(false)
-      
+    setLoading(false);
   };
 
   return (
@@ -66,13 +66,16 @@ const router = useRouter()
           onChangeText={setPassword}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+          <Text style={styles.buttonText}>{loading?'Loading...':'Register'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.loginLink}>
           <Text style={styles.loginText}>
-            Already have an account? <Link style={styles.loginHighlight} href="/login">Log in</Link>
+            Already have an account?
+            <Pressable onPress={() => router.push("/(auth)/login")}>
+              <Text style={styles.loginHighlight}>Log In</Text>
+            </Pressable>
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -119,7 +122,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   button: {
-     backgroundColor: "#4F46E5",
+    backgroundColor: "#4F46E5",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,

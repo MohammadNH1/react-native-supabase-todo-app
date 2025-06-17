@@ -23,16 +23,12 @@ export default function EditProfileScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("User not found");
+       if(!user) return
 
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", user?.id)
           .single();
 
         if (error) throw error;
@@ -58,10 +54,6 @@ export default function EditProfileScreen() {
 
     try {
       setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       const updates = {
         id: user?.id,
         username,
@@ -72,7 +64,7 @@ export default function EditProfileScreen() {
       };
 
       const { error } = await supabase.from("profiles").upsert(updates);
-      if (error) throw error;
+      if (error) return;
 
       router.replace("/(tabs)/profile");
     } catch (error: any) {

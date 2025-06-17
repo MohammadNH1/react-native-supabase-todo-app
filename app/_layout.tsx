@@ -20,6 +20,7 @@ function AuthGate() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)/welcome" />
       <Stack.Screen name="(auth)/login" />
+      <Stack.Screen name="(auth/register)"/>
     </Stack>
   );
 }

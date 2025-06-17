@@ -13,10 +13,9 @@ import TodoItem from "./TodoItem";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 export default function TodoList() {
-  const [tasks, setTasks] = useState([
-    { id: "1", title: "Read a book", iscompleted: true },
-    { id: "2", title: "Meet with friend", iscompleted: false },
-  ]);
+  const [tasks, setTasks] = useState<
+    { id: string; title: string; iscompleted: boolean }[]
+  >([]);
   const [title, setTitle] = useState("");
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -27,13 +26,12 @@ export default function TodoList() {
         .select("*")
         .eq("user_id", user?.id);
 
-      if (error) throw error;
+      if (error) return;
       if (data) {
-        console.log('data',data)
         setTasks(data);
       }
     } catch (error: any) {
-      console.log('error',error)
+      console.log("error", error);
       Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
@@ -44,60 +42,58 @@ export default function TodoList() {
     fetchTodo();
   }, []);
 
-  const addTask = async() => {
+  const addTask = async () => {
     if (!title.trim()) return;
     const newTask = {
       title,
-      iscompleted:false,
-      user_id:user?.id
+      iscompleted: false,
+      user_id: user?.id,
     };
     //setTasks([newTask, ...tasks]);
-    const {error,data} = await supabase.from("todos").insert(newTask)
+    const { error, data } = await supabase.from("todos").insert(newTask);
     if (error) {
-    console.log('Insert error:', error.message);
-    Alert.alert("Error", error.message);
-  } else {
-    console.log('Inserted task:', data);
-    // Optionally: fetch updated task list
-    fetchTodo();
-  }
+      console.log("Insert error:", error.message);
+      Alert.alert("Error", error.message);
+    } else {
+      console.log("Inserted task:", data);
+      // Optionally: fetch updated task list
+      fetchTodo();
+    }
 
-  setTitle("");
+    setTitle("");
   };
 
   const deleteTask = async (id: string) => {
-  const { error } = await supabase.from('todos').delete().eq('id', id);
-  if (error) {
-    console.log("Delete error:", error.message);
-    Alert.alert("Error", error.message);
-    return;
-  }
+    const { error } = await supabase.from("todos").delete().eq("id", id);
+    if (error) {
+      console.log("Delete error:", error.message);
+      Alert.alert("Error", error.message);
+      return;
+    }
 
-  // Update local state
-  setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-};
-
+    // Update local state
+    setTasks((prevTasks) => prevTasks.filter((task) => task?.id !== id));
+  };
 
   const toggleCompleted = async (id: string, currentStatus: boolean) => {
-  const { error } = await supabase
-    .from('todos')
-    .update({ iscompleted: !currentStatus })
-    .eq('id', id);
+    const { error } = await supabase
+      .from("todos")
+      .update({ iscompleted: !currentStatus })
+      .eq("id", id);
 
-  if (error) {
-    console.log("Update error:", error.message);
-    Alert.alert("Error", error.message);
-    return;
-  }
+    if (error) {
+      console.log("Update error:", error.message);
+      Alert.alert("Error", error.message);
+      return;
+    }
 
-  // Update local state
-  setTasks((prevTasks) =>
-    prevTasks.map((task) =>
-      task.id === id ? { ...task, iscompleted: !currentStatus } : task
-    )
-  );
-};
-
+    // Update local state
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, iscompleted: !currentStatus } : task
+      )
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -125,6 +121,11 @@ export default function TodoList() {
             deleteTask={deleteTask}
             toggleCompleted={toggleCompleted}
           />
+        )}
+        ListEmptyComponent={() => (
+          <Text style={{ textAlign: "center", color: "#aaa", fontSize: 16 }}>
+            No task please add...
+          </Text>
         )}
         contentContainerStyle={styles.taskList}
         showsVerticalScrollIndicator={false}

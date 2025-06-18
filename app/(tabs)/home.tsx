@@ -4,12 +4,9 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Image,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
 import { PostCard } from "@/components/PostCard";
 
@@ -43,27 +40,7 @@ export default function Home() {
   useEffect(() => {
     fetchPosts();
   }, []);
-  const renderPost = ({ item }: { item: Post }) => (
-    <View style={styles.postCard}>
-      {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={styles.postImage} />
-      ) : null}
-      <Text style={styles.postTitle}>{item.title}</Text>
-      <Text style={styles.postDescription}>{item.description}</Text>
-
-      <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton}>
-          <FontAwesome name="heart-o" size={22} color="#EF4444" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Feather name="message-circle" size={22} color="#3B82F6" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="share-social-outline" size={22} color="#10B981" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+ 
 
   if (loading) {
     return (

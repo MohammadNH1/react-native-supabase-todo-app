@@ -9,10 +9,12 @@ import {
   ActivityIndicator,
   Image,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function EditPostScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +25,7 @@ export default function EditPostScreen() {
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-
+console.log('uploading',uploading)
   useEffect(() => {
     const fetchPost = async () => {
       const { data, error } = await supabase
@@ -53,6 +55,7 @@ export default function EditPostScreen() {
 
     if (!result.canceled && result.assets.length > 0) {
       const selected = result.assets[0];
+      console.log('url',selected.uri)
       uploadImage(selected.uri);
     }
   };
@@ -66,7 +69,7 @@ export default function EditPostScreen() {
       const filename = `${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("post-images") // replace with your actual bucket name
+        .from("post-image") // replace with your actual bucket name
         .upload(filename, blob, {
           cacheControl: "3600",
           upsert: false,
@@ -75,7 +78,7 @@ export default function EditPostScreen() {
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage
-        .from("post-images")
+        .from("post-image")
         .getPublicUrl(filename);
       setImageUrl(data.publicUrl);
       Alert.alert("Uploaded", "Image uploaded successfully!");
@@ -109,6 +112,9 @@ export default function EditPostScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
       <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
@@ -138,11 +144,11 @@ export default function EditPostScreen() {
         <Image source={{ uri: imageUrl }} style={styles.preview} />
       ) : null}
 
-      <Button
+      {/* <Button
         title={uploading ? "Uploading..." : "Upload New Image"}
         onPress={pickImage}
         disabled={uploading}
-      />
+      /> */}
 
       <View style={{ height: 20 }} />
 
@@ -164,6 +170,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     color: "#1F2937",
   },
+  button:{
+position: 'absolute',
+  top: 20,
+  left: 10,
+  zIndex: 1,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#D1D5DB",
@@ -184,4 +196,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
 });

@@ -54,7 +54,7 @@ export default function post() {
       setTitle("");
       setDescription("");
       setImageUrl("");
-       router.replace('/(tabs)/home');
+      router.replace('/(tabs)/home');
     }
   };
 

@@ -10,13 +10,18 @@ import {
 import { supabase } from "@/lib/supabase";
 import { PostCard } from "@/components/PostCard";
 
+
 interface Post {
   id: string;
   title: string;
   description: string;
   image_url: string;
   created_at: string;
-  user_id:string
+  user_id:string,
+  profiles:{
+  username: string;
+  avatar_url: string;
+  }
 }
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -26,7 +31,7 @@ export default function Home() {
     setLoading(true);
     const { data, error } = await supabase
       .from("posts")
-      .select("*")
+      .select("*,profiles(username, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -42,6 +47,7 @@ export default function Home() {
   }, []);
  
 
+  console.log('post',posts)
   if (loading) {
     return (
       <View style={styles.loadingContainer}>

@@ -5,9 +5,9 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Alert
+  Alert,
 } from "react-native";
-import {  useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { FontAwesome, Feather, Ionicons } from "@expo/vector-icons";
@@ -17,13 +17,72 @@ interface Post {
   description: string;
   image_url: string;
   created_at: string;
-  user_id:string
+  user_id: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
 }
 
-export const PostCard = ({ item, fetchPosts }: { item: Post; fetchPosts: () => void }) => {
+export const PostCard = ({
+  item,
+  fetchPosts,
+}: {
+  item: Post;
+  fetchPosts: () => void;
+}) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const router = useRouter();
-  const {user} = useAuth()
+  const { user } = useAuth();
+
+  const [liked, setLiked] = useState(false);
+  const [likeId, setLikeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkIfLiked();
+  }, []);
+  const checkIfLiked = async () => {
+    const { data, error } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("post_id", item.id)
+      .eq("user_id", user?.id)
+      .single();
+
+    if (data) {
+      setLiked(true);
+      setLikeId(data.id);
+    } else {
+      setLiked(false);
+      setLikeId(null);
+    }
+  };
+  const handleLikeToggle = async () => {
+    if (!user)
+      return Alert.alert("Login required", "Please login to like posts.");
+
+    if (liked && likeId) {
+      // Unlike
+      const { error } = await supabase.from("likes").delete().eq("id", likeId);
+      if (!error) {
+        setLiked(false);
+        setLikeId(null);
+      }
+    } else {
+      // Like
+      const { data, error } = await supabase
+        .from("likes")
+        .insert({ post_id: item.id, user_id: user.id })
+        .select()
+        .single();
+
+      if (!error) {
+        setLiked(true);
+        setLikeId(data.id);
+      }
+    }
+  };
+
   const handleEdit = () => {
     setMenuVisible(false);
     router.push({ pathname: "/edit-post", params: { id: item.id } });
@@ -31,30 +90,58 @@ export const PostCard = ({ item, fetchPosts }: { item: Post; fetchPosts: () => v
 
   const handleDelete = async () => {
     setMenuVisible(false);
-    Alert.alert("Confirm Delete", "Are you sure you want to delete this post?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          const { error } = await supabase.from("posts").delete().eq("id", item.id);
-          if (error) {
-            Alert.alert("Delete Failed", error.message);
-          } else {
-            fetchPosts();
-          }
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this post?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase
+              .from("posts")
+              .delete()
+              .eq("id", item.id);
+            if (error) {
+              Alert.alert("Delete Failed", error.message);
+            } else {
+              fetchPosts();
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
     <View style={styles.postCard}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", position: "relative" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          position: "relative",
+        }}
+      >
         <Text style={styles.postTitle}>{item.title}</Text>
-       {user?.id===item?.user_id && <TouchableOpacity onPress={() => setMenuVisible((prev) => !prev)}>
-          <Feather name="more-vertical" size={20} color="#6B7280" />
-        </TouchableOpacity>}
+        {user?.id === item?.user_id && (
+          <TouchableOpacity onPress={() => setMenuVisible((prev) => !prev)}>
+            <Feather name="more-vertical" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        )}
+
+        <View>
+          {item?.profiles?.avatar_url ? (
+            <Image
+              source={{ uri: item.profiles?.avatar_url }}
+              style={styles.avatarforUser}
+            />
+          ) : (
+            <View style={styles.avatarPlaceholder} />
+          )}
+
+          <Text>{item.profiles.username}</Text>
+        </View>
 
         {/* Dropdown menu beside the icon */}
         {menuVisible && (
@@ -72,17 +159,33 @@ export const PostCard = ({ item, fetchPosts }: { item: Post; fetchPosts: () => v
       </View>
 
       {item.image_url && (
-        <Image source={{ uri: item.image_url }} style={styles.postImage} />
+        <TouchableOpacity
+          onPress={() =>
+            router.push({ pathname: "/post-detail", params: { id: item.id } })
+          }
+        >
+          <Image source={{ uri: item.image_url }} style={styles.postImage} />
+        </TouchableOpacity>
       )}
       <Text style={styles.postDescription}>{item.description}</Text>
 
       <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton}>
-          <FontAwesome name="heart-o" size={22} color="#EF4444" />
+        <TouchableOpacity style={styles.iconButton} onPress={handleLikeToggle}>
+          <FontAwesome
+            name={liked ? "heart" : "heart-o"}
+            size={22}
+            color="#EF4444"
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() =>
+            router.push({ pathname: "/post-detail", params: { id: item.id } })
+          }
+        >
           <Feather name="message-circle" size={22} color="#3B82F6" />
         </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="share-social-outline" size={22} color="#10B981" />
         </TouchableOpacity>
@@ -91,13 +194,23 @@ export const PostCard = ({ item, fetchPosts }: { item: Post; fetchPosts: () => v
   );
 };
 
-
-
-
-
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  avatar: { width: 100, height: 100, borderRadius: 50, alignSelf: "center", marginBottom: 20 },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+
+  avatarforUser: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
   avatarPlaceholder: {
     width: 100,
     height: 100,
@@ -186,55 +299,54 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   menuContainer: {
-  backgroundColor: "#F9FAFB",
-  borderRadius: 8,
-  paddingVertical: 8,
-  paddingHorizontal: 10,
-  borderWidth: 1,
-  borderColor: "#E5E7EB",
-  marginTop: 8,
-  marginBottom: 10,
-},
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginTop: 8,
+    marginBottom: 10,
+  },
 
-modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0, 0, 0, 0.3)",
-  justifyContent: "center",
-  alignItems: "center",
-},
-modalMenu: {
-  width: 200,
-  backgroundColor: "#fff",
-  padding: 12,
-  borderRadius: 10,
-  elevation: 5,
-},
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMenu: {
+    width: 200,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 10,
+    elevation: 5,
+  },
 
-dropdownMenu: {
-  position: "absolute",
-  top: 30,
-  right: 0,
-  backgroundColor: "#fff",
-  borderRadius: 8,
-  elevation: 5,
-  shadowColor: "#000",
-  shadowOpacity: 0.1,
-  shadowOffset: { width: 0, height: 2 },
-  shadowRadius: 4,
-  paddingVertical: 4,
-  width: 140,
-  zIndex: 10,
-},
-menuItem: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 10,
-  paddingHorizontal: 12,
-  gap: 8,
-},
-menuText: {
-  fontSize: 16,
-  color: "#1F2937",
-},
-
+  dropdownMenu: {
+    position: "absolute",
+    top: 30,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    paddingVertical: 4,
+    width: 140,
+    zIndex: 10,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  menuText: {
+    fontSize: 16,
+    color: "#1F2937",
+  },
 });

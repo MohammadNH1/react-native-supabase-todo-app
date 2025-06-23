@@ -19,6 +19,7 @@ interface Post {
   created_at: string;
   user_id:string,
   profiles:{
+  id:string;
   username: string;
   avatar_url: string;
   }
@@ -31,7 +32,7 @@ export default function Home() {
     setLoading(true);
     const { data, error } = await supabase
       .from("posts")
-      .select("*,profiles(username, avatar_url)")
+      .select("*,profiles(id, username, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -47,7 +48,7 @@ export default function Home() {
   }, []);
  
 
-  console.log('post',posts)
+  //console.log('post',posts)
   if (loading) {
     return (
       <View style={styles.loadingContainer}>

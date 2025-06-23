@@ -31,7 +31,7 @@ export default function PostDetail() {
   const fetchPost = async () => {
     const { data, error } = await supabase
       .from("posts")
-      .select("*")
+      .select("*,profiles(id)")
       .eq("id", id)
       .single();
     if (!error) setPost(data);
@@ -64,6 +64,17 @@ export default function PostDetail() {
     }
     setNewComment("");
     fetchComments();
+
+    // sent notification to the user
+    const fromUserId = user?.id;
+    const touserId = post?.profiles?.id;
+    if (!fromUserId || fromUserId === touserId) return;
+    await supabase.from("notifications").insert({
+      type: "comment",
+      from_user_id: fromUserId,
+      to_user_id: touserId,
+      post_id: post.id,
+    });
   };
 
   const handleDeleteComment = async (commentId: string) => {

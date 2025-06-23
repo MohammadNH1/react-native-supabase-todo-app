@@ -19,6 +19,15 @@ export default function TabLayout() {
         tabBarIcon:({color})=><FontAwesome name='plus-square' size={24} color={color}/>
       }}
       />
+
+      <Tabs.Screen
+      name='notification'
+      options={{
+        title:'Notifications',
+        tabBarIcon:({color})=><FontAwesome name='bell' size={24} color={color}/>
+      }}
+      />
+      
       <Tabs.Screen
       name='todo'
       options={{
@@ -26,6 +35,7 @@ export default function TabLayout() {
         tabBarIcon:({color})=><Octicons name="tasklist" size={24} color={color} />
       }}
       />
+      
 
       <Tabs.Screen
         name="profile"
